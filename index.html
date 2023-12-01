@@ -1,0 +1,600 @@
+<!-- 
+Silent (Steganographic) Stealth Address Protocol, secp256k1 Demo
+Content public domain except noble_secp256k1.js, which includes its own license.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta content="Silent (Steganographic) Stealth Address Protocol, secp256k1 Demo" name="description">
+  <meta content="Greg Sidal" name="author">
+  <title>Silent (Steganographic) Stealth Protocol Demo</title>
+
+  <!-- ///////////////////////////////////////////////////////////////////////////////////////// -->
+  <style>
+    body {font-family:sans-serif; font-size:95%;}
+    body {margin:0; padding:0; color:#333; background-color:rgb(205,205,205)}
+    div {position:relative; display:block;}
+    .page {margin:0 0; padding:0; background-color:rgb(250,250,252)}
+    /* for responsiveness testing
+    @media all and (min-width:1351px) and (orientation:landscape) {.page {margin:0 22%;} body {background-color:purple;}}
+    @media all and (max-width:1350px) and (orientation:landscape) {.page {margin:0 20%;} body {background-color:yellow;}}
+    @media all and (max-width:1200px) and (orientation:landscape) {.page {margin:0 15%;} body {background-color:blue;}}
+    @media all and (max-width:1030px) and (orientation:landscape) {.page {margin:0 11%;} body {background-color:green;}}
+    @media all and (max-width:900px) and (orientation:landscape) {.page {margin:0 7%;} body {background-color:red;}}
+    */
+    @media all and (min-width:1351px) and (orientation:landscape) {.page {margin:0 22%;}}
+    @media all and (max-width:1350px) and (orientation:landscape) {.page {margin:0 20%;}}
+    @media all and (max-width:1200px) and (orientation:landscape) {.page {margin:0 15%;}}
+    @media all and (max-width:1030px) and (orientation:landscape) {.page {margin:0 11%;}}
+    @media all and (max-width:900px) and (orientation:landscape)  {.page {margin:0 7%;}}
+
+    .blog-body, .hdr-body, .foot-body, .module-body {margin:0; padding:3em 2em; color:#222;}
+    .blog-body, .hdr-body, .foot-body {background-color:rgb(253,253,253)}
+    .hdr-body {padding-top:2.5em; padding-bottom:0.5em;}
+    .module-body {background-color:#e9e9e9;}
+    .module {margin:3.1em 0; border:1px solid #ccc; padding:1em; background-color:rgb(250,250,250)}
+    .module.plain, .module.article {border:0; padding:0; background-color:transparent;}
+    .module.article {font-size:103%;}
+    .module.foot {margin:1.9em 0;}
+    @media all and (orientation:portrait) {
+      body {font-size:93%;}
+      .blog-body, .hdr-body, .foot-body {padding:2em 1em;}
+      .hdr-body {padding-top:1.5em; padding-bottom:1.5em;}
+      .module-body {padding:2.5em 0;}
+      .hdr-body, .module-body {background-color:#e8e8e8;}
+      .module {margin:2.50em 0; border:0;}
+    }
+    @media all and (max-width:500px) and (orientation:portrait) {body {font-size:91%;}}
+    .module:first-child {margin-top:0;}
+    .module:last-child {margin-bottom:0;}
+
+    h3, h4 {margin-block-start:0; margin-block-end:0;}
+    h4 {margin-block-start:1em;}
+    .module-hdr, .result {margin:0; font-size:113%; font-weight:bold;}
+
+    .subsec {display:block; margin:0; padding:0; margin-bottom:2.5em;}
+    .subsec:last-child {margin-bottom:0;}
+    .result {margin-top:1em; font-size:100%;}
+    .match:before {content:'\2714'; margin-right:0.3em;}
+    .notmatch:before {content:'\26a0'; margin-right:0.3em;}
+
+    button {margin-top:1.2em; margin-bottom:0.5em; font-size:107%;}
+    button, .clickable.btn {font-weight:bold;}
+    button, .clickable {display:inline-block; cursor:pointer; color:#3a5a70; background-color:transparent;}
+    button, .clickable.btn {border:1px solid #c4c4c4; padding:0.1em 0.3em;}
+    .clickable.btn {margin:0; font-size:105%;}
+    button:active, .clickable:active {color:#e96f6f;}
+    @media all and (hover:hover) {button:hover, .clickable:hover {color:#e96f6f;}}
+
+    .chk {display:inline-block; margin-top:1.2em;}
+    .chklabel {font-size:85%;}
+
+    textarea, input {margin-top:0.2em; border:1px solid #d4d4d4; font-family:monospace;}
+    input {display:block; font-size:110%;}
+    textarea {width:97%; height:2.5em; font-size:105%;}
+
+    .pub, .bob {background-color:rgba(60,70,140,0.06);}
+    .priv, .alice {background-color:rgba(140,60,60,0.06);}
+    .tx {background-color:transparent; height:12em; font-size:84%;}
+    .S {background-color:rgba(140,140,50,0.06);}
+
+    .bob.secret {
+       background:repeating-linear-gradient( 45deg, 
+              rgba(60,70,140,0.04), rgba(60,70,140,0.04) 10px, 
+              rgba(60,70,140,0.10) 10px, rgba(60,70,140,0.10) 20px
+    );}
+    .alice.secret {
+       background:repeating-linear-gradient( 45deg, 
+              rgba(140,60,60,0.04), rgba(140,60,60,0.04) 10px, 
+              rgba(140,60,60,0.10) 10px, rgba(140,60,60,0.10) 20px
+    );}
+    .S.secret {
+       background:repeating-linear-gradient( 45deg, 
+              rgba(140,140,50,0.04), rgba(140,140,50,0.04) 10px, 
+              rgba(140,140,50,0.10) 10px, rgba(140,140,50,0.10) 20px
+    );}
+
+    .blog {font-size:96%; margin-top:1.2em;}
+    .blog:first-child {margin-top:0;}
+    .label {font-size:88%; margin-top:1.2em;}
+    .footnote {margin-top:0.0em; padding-bottom:0.2em; font-style:italic;}
+    .tiny {font-size:94%;}
+    .tinyer {font-size:82%;}
+    .footlink {font-size:90%; position:relative; padding-left:0.2em; top:-0.3em;}
+    a {font-family:monospace;}
+    a.long {display:block; overflow:hidden; text-overflow:ellipsis;}
+    tt, a {font-size:115%;}
+
+    .dev {display:none;}  /*(remove for developer UI)*/
+    .hideifempty:empty {display:none;}
+
+    @media all and (orientation:portrait) {.label {font-size:87%;} .tiny {font-size:89%;}}
+  </style>
+  <!-- ///////////////////////////////////////////////////////////////////////////////////////// -->
+
+
+  <!-- ///////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- carefully vet before using any of this code in production env -->
+  <script type="text/javascript" src="noble_secp256k1.js"></script>
+  <script>
+    function _msgout( id, msg = "" ) {
+      document.getElementById( id ).innerHTML = msg;
+    }
+    function _puttall( ids = [], t = "" ) {
+      for( var i=0; i<ids.length; i++ )
+        document.getElementById( ids[i] ).value = t;
+    }
+    function _putt( id, t, dependencies ) {
+      _puttall( [id],  t );
+      _puttall( dependencies );
+    }
+    function _put( id, bytes, dependencies ) {
+      _putt( id, b2h(bytes), dependencies );
+    }
+    function _gett( id, reqmsg ) {
+      var v = document.getElementById( id ).value;
+      if (reqmsg && !v)
+        throw( reqmsg );
+      return v;
+    }
+    function _get( id, reqmsg ) {
+      return h2b( _gett(id,reqmsg) );
+    }
+    function __newb( bytes, newlen ) {
+      var bytes2 = new Uint8Array( newlen );
+      for( var i=0; i<bytes.length && i<newlen; i++ ) bytes2[i] = bytes[i];
+      for( ; i<bytes2.length; i++ ) bytes2[i] = 0;
+      //console.log( "__newb in: ", bytes );
+      //console.log( "__newb out: ", bytes2 );
+      return bytes2;
+    }
+    async function __hash( msg, func = 'SHA-256' ) {
+      var msgbytes = (new TextEncoder()).encode( msg );
+      //console.log( "HASH msgbytes: ", msgbytes );
+      var buf = await crypto.subtle.digest( func, msgbytes );
+      buf = new Uint8Array( buf );
+      //console.log( "HASH buf: ", buf );
+      return buf;
+    }
+    async function __sign( hash, priv ) {
+      var sig = await signAsync( hash, priv );
+      console.log( "Signature: ", sig );
+      var sigbytes = sig.toCompactRawBytes();
+      //console.log( "sign: sigbytes: ", sigbytes );
+      //console.log( "sign: recovery: ", sig.recovery );
+      var sigbytes2 = __newb( sigbytes, sigbytes.length+1 );
+      sigbytes2[sigbytes.length] = sig.recovery;
+      //console.log( "sign: sigbytes w recovery: ", sigbytes2 );
+      return sigbytes2;
+    }
+    async function __signmsg( msg, priv ) {
+      var h = await __hash( msg );
+      var sig = await __sign( h, priv );
+      return {'msg':msg, 'hash':h, 'sig':sig};
+    }
+    async function __sigparse( sighex ) {
+      var sigbytes = h2b( sighex );
+      var recovery = sigbytes[sigbytes.length-1];
+      //console.log( "sigparse: sigbytes w recovery: ", sigbytes );
+      //console.log( "sigparse: recovery: ", recovery );
+      sigbytes = sigbytes.slice( 0, sigbytes.length-1 );
+      //console.log( "sigparse: sigbytes: ", sigbytes );
+      var sig = Signature.fromCompact( b2h(sigbytes) );
+      return sig.addRecoveryBit( recovery );
+    }
+    async function __KDF( hash ) {
+      //console.log( "KDF hash in: ", hash );
+      var tmp = __newb( hash, fLen+8 );
+      //console.log( "KDF tmp: ", tmp );
+      var k = hashToPrivateKey( tmp );
+      //console.log( "KDF out: ", k );
+      return k;
+    }
+    async function __deriveSwallet( S ) {
+      var SW = {};
+      SW.priv = await __hash( b2h(S) );
+      SW.priv = await __KDF( SW.priv );
+      SW.pub = getPublicKey( SW.priv );
+      console.log( "S wallet private key (KDF(S)): ", SW.priv );
+      console.log( "S wallet public key: ", SW.pub );
+      return SW;
+    }
+    var Demo = {
+      onpageload: async function() {
+      },
+      keypair: async function( idpriv, idpub, rand, consolemsg = "", dependencies ) {
+        try {
+          var KP = {};
+          if (rand)
+            KP = {priv: utils.randomPrivateKey()};
+          else
+            KP.priv = _get( idpriv, consolemsg + " private key expected" );
+          KP.pub = getPublicKey( KP.priv );
+          console.log( "==== " + consolemsg + " ====" );
+          console.log( consolemsg+" private key: ", KP.priv );
+          console.log( consolemsg+" public key: ", KP.pub );
+          _put( idpriv, KP.priv, dependencies );
+          _put( idpub, KP.pub );
+          return KP;
+        }
+        catch( e ) {
+          alert( e );
+        }
+      },
+      bob1_keychanged: async function() {
+        return _putt( 'bob-dh-pub', "" );
+      },
+      bob1_rand: async function() {
+        return Demo.keypair( 'bob-dh-priv', 'bob-dh-pub', true, "Bob's" );
+      },
+      bob1_fromentry: async function() {
+        return Demo.keypair( 'bob-dh-priv', 'bob-dh-pub', false, "Bob's" );
+      },
+      alice_changed: async function() {
+        return _puttall( ['alice-S','alice-S-pub','alice-tx'] );
+      },
+      alice_keychanged: async function() {
+        Demo.alice_changed();
+        return _puttall( ['alice-pub'] );
+      },
+      alice_wallet_rand: async function() {
+        Demo.alice_keychanged();
+        return Demo.keypair( 'alice-priv', 'alice-pub', true, "Alice's wallet" );
+      },
+      alice_wallet_fromentry: async function() {
+        Demo.alice_keychanged();
+        return Demo.keypair( 'alice-priv', 'alice-pub', false, "Alice's wallet" );
+      },
+      alice_getbobsma: function() {
+        try {
+          var bobs = _get( 'bob-dh-pub', "Bob hasn't published a master address yet" );
+          _put( 'alice-recipient-dh-pub', bobs );
+          return Demo.alice_changed();
+        }
+        catch( e ) {
+          alert( e );
+        }
+      },
+      alice_genS: async function() {
+        try {
+          console.log( "==== Alice's derivation ====" );
+          var Alice = {priv: _get('alice-priv',"Create/open wallet first")};
+          var S = getSharedSecret( Alice.priv, _get('alice-recipient-dh-pub',"Recipient's master address expected") );
+          console.log( "DH 'S' (Alice's calculation): ", S );
+          _put( 'alice-S', S );
+          var SW = await __deriveSwallet( S );
+          _put( 'alice-S-pub', SW.pub );
+          return true;
+        }
+        catch( e ) {
+          alert( e );
+        }
+      },
+      alice_signtx: async function() {
+        try {
+          console.log( "==== Alice's signature ====" );
+          var Alice = {priv: _get('alice-priv',"Create/open wallet first")};
+          var tx = {val: _gett('alice-tx-value',"Number of coins expected"),
+                    from:_gett('alice-pub',"Alice's wallet needed"),
+                    to:  _gett('alice-S-pub',"Derive s-address first")};
+          var res = await __signmsg( JSON.stringify(tx), Alice.priv );
+          _putt( 'alice-tx', JSON.stringify({'signed-content':tx,signature:b2h(res.sig)},null,2) );
+          return true;
+        }
+        catch( e ) {
+          alert( e );
+        }
+      },
+      alice_payto: async function() {
+        if (await Demo.alice_genS())
+          return await Demo.alice_signtx();
+      },
+      bob2_changed: async function() {
+        _msgout( 'bob2-result-match', "" );
+        _msgout( 'bob2-result-notmatch', "" );
+        return _puttall( ['bob2-tx-pub','bob2-S','bob2-S-pub','bob2-S-priv'] );
+      },
+      bob2_keychanged: async function() {
+        return Demo.bob2_changed();
+      },
+      bob2_txchanged: async function() {
+        return Demo.bob2_changed();
+      },
+      bob2_getalicestx: function() {
+        try {
+          var tx = _gett( 'alice-tx', "Alice hasn't sent a transaction yet" );
+          _putt( 'bob2-tx', tx );
+          Demo.bob2_txchanged();
+          return true;
+        }
+        catch( e ) {
+          alert( e );
+        }
+      },
+      bob2_copypriv: function() {
+        try {
+          var bobs = _get( 'bob-dh-priv', "Bob hasn't created a master key yet" );
+          _put( 'bob2-dh-priv', bobs );
+          Demo.bob2_keychanged();
+          return true;
+        }
+        catch( e ) {
+          alert( e );
+        }
+      },
+      bob2: async function() {
+        try {
+          console.log( "==== Bob's derivation ====" );
+          var tx = JSON.parse( _gett('bob2-tx',"Transaction expected") );
+          if (!tx['signed-content'])
+            throw( "Transaction content expected" );
+          if (!(tx['signed-content'].from && tx['signed-content'].to && tx['signed-content'].val && tx.signature))
+            throw( "Transaction incomplete" );
+          var sig = await __sigparse( tx.signature );
+          console.log( "Tx signature: ", sig );
+          var h = await __hash( JSON.stringify(tx['signed-content']) );
+          var pubsig = sig.recoverPublicKey( b2h(h) ).toRawBytes();
+          if (b2h(pubsig) != tx['signed-content'].from)
+            throw( "Transaction is invalid" );
+          if (!verify( sig, h, pubsig ))
+            throw( "Invalid transaction (signature verification failed)" );
+          console.log( "Public key (recovered from tx signature): ", pubsig );
+          //
+          var S = getSharedSecret( _get('bob2-dh-priv',"Bob's master key expected"), pubsig );
+          console.log( "DH 'S' (Bob's calculation): ", S );
+          var SW = await __deriveSwallet( S );
+          //
+          _put( 'bob2-tx-pub', pubsig );
+          _put( 'bob2-S', S );
+          _put( 'bob2-S-pub', SW.pub );
+          _put( 'bob2-S-priv', SW.priv );
+          if (tx['signed-content'].to == b2h(SW.pub)) {
+            _put( 'bob2-S-priv', SW.priv );
+            _msgout( 'bob2-result-match', "Bob has received " + tx['signed-content'].val + " coins" );
+            _msgout( 'bob2-result-notmatch', "" );
+          }
+          else {
+            _putt( 'bob2-S-priv', "N/A" );
+            _msgout( 'bob2-result-notmatch', "Coins were not sent to this s-address" );
+            _msgout( 'bob2-result-match', "" );
+          }
+          return true;
+        }
+        catch( e ) {
+          alert( e );
+        }
+      }
+    }
+  </script>
+  <!-- ///////////////////////////////////////////////////////////////////////////////////////// -->
+
+</head>
+
+<body onload="Demo.onpageload();">
+<div class="page">
+
+  <div class="hdr-body">
+  <div class="module plain">
+    <h3>Silent Stealth Address Protocols</h3>
+    <h4>secp256k1 Demo (Bitcoin/Ethereum)</h4>
+  </div>
+  </div>
+
+  <div class="blog-body">
+    <div class="module plain article">
+      <div class="blog">
+Stealth address protocols make it possible to transact on cryptocurrency networks using encrypted addresses.
+Use of encryption in messaging, web browsing, and other forms of personal communications 
+has become routine and essential to security and privacy<a href="#foot1" class="clickable footlink">1</a>.
+Blockchain based financial communications can similarly benefit from the use of 
+encryption<a href="#foot2" class="clickable footlink">2</a>.
+      </div>
+      <div class="blog">
+* * *
+      </div>
+      <div class="blog">
+If Alice is paying cryptocurrency to Bob in the usual way, Alice sends coins directly to an address Bob controls. When using a stealth protocol, Alice instead sends the coins to an encrypted address which she derives from Bob's 'master address'.
+      </div>
+      <div class="blog">
+To observers, an encrypted address ('s-address') is indistinguishable from a normal address, but Bob will know it was created for him and will be able to unlock the corresponding wallet.  Since it is difficult to link an s-address to a particular master address, no one will easily know Bob is the actual recipient.
+      </div>
+      <div class="blog">
+Silent (steganographic) stealth protocols<a href="#foot3" class="clickable footlink">3</a>
+improve the privacy outcome by enabling Alice to transact without revealing she is even using a privacy protocol.  Using the sample silent protocol implemented here, Alice won't need to take any action other than just send the normal 
+transaction<a href="#foot4" class="clickable footlink">4</a>.
+      </div>
+      <div class="blog">
+The three modules below demonstrate this simplified <tt>secp256k1</tt>-based silent 
+protocol<a href="#foot5" class="clickable footlink">5</a>.  
+The modules are self-contained to mimic how they would be used in the wild (no internal state is shared between them).
+      </div>
+    </div>
+  </div>
+
+
+  <div class="module-body">
+
+  <div class="module">
+    <div class="module-hdr">Bob: generate and publish master address</div>
+    <div class="label">Stealth master key (private key):</div>
+    <textarea class="bob secret" id="bob-dh-priv" oninput="Demo.bob1_keychanged()"></textarea>
+    <button onclick="Demo.bob1_rand()">Random</button>
+    <button onclick="Demo.bob1_fromentry()">Use entry</button>
+    <div class="label">Master address (public key):</div>
+    <textarea class="bob" id="bob-dh-pub" disabled></textarea>
+    <div class="label">
+Bob publishes master address where Alice and others can find it.
+Master key will be used by Bob to identify s-addresses created for him
+and unlock the corresponding wallets.
+Key-pair generated locally/offline.
+    </div>
+  </div>
+
+  <div class="module">
+    <div class="subsec">
+      <div class="module-hdr">Alice: 1) create or open wallet</div>
+      <div class="label">Wallet private key:</div>
+      <textarea class="alice secret" id="alice-priv" oninput="Demo.alice_keychanged()"></textarea>
+      <button class="" onclick="Demo.alice_wallet_rand()">Random</button>
+        <button class="" onclick="Demo.alice_wallet_fromentry()">Use entry</button>
+      <div class="label">Wallet address (long form):</div>
+      <textarea class="alice" id="alice-pub" disabled></textarea>
+      <div class="label">
+        Wallet preloaded with infinite coins.
+        Demo uses long form of addresses (<tt>secp256k1</tt> public keys).
+      </div>
+    </div>
+    <div class="subsec">
+      <div class="module-hdr">Alice: 2) derive s-address and send coins to it</div>
+      <div class="label">Coins to send:</div> 
+              <input class="hash" id="alice-tx-value" value="25.0" oninput="Demo.alice_changed()"/>
+      <div class="label">Recipient's master address:
+        <div class="clickable btn" onclick="Demo.alice_getbobsma()">use Bob's</div></div>
+      <textarea class="bob" id="alice-recipient-dh-pub" oninput="Demo.alice_changed()"></textarea>
+      <button onclick="Demo.alice_payto()">Derive s-address and sign transaction</button>
+      <div class="label">Recipient (derived s-address, long form):</div>
+      <textarea class="S" id="alice-S-pub" disabled></textarea>
+      <div class="label">
+        s-address derived from
+        <a href="https://en.m.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange" 
+           class="clickable" target="_blank">Diffie-Hellman</a>
+        shared secret, <tt>S = DH(master address, Alice's wallet private key)</tt>.
+        In production environments, s-address would look and act like a normal bitcoin or ethereum address.
+      </div>
+      <div class="label dev">'S' Diffie-Hellman shared secret: Alice's privkey * Recipient's master address):</div>
+      <textarea class="S dev" id="alice-S" disabled></textarea>
+      <div class="label">Transaction:</div>
+      <textarea class="tx" id="alice-tx" disabled></textarea>
+      <div class="label">
+Simplified transaction<a href="#foot6" class="clickable footlink">6</a>.
+Alice uses the key-pair from her wallet to both derive the s-address and sign the transaction.
+All Alice's actions performed locally/offline except obtaining master address and broadcasting transaction.
+      </div>
+    </div>
+  </div>
+
+  <div class="module">
+    <div class="module-hdr">Bob: recover coins from a transaction</div>
+    <div class="label">Transaction:
+      <div class="clickable btn" onclick="Demo.bob2_getalicestx()">use Alice's tx</div></div>
+    <textarea class="tx" id="bob2-tx" oninput="Demo.bob2_txchanged()"></textarea>
+    <div class="label">Bob's master key:
+      <div class="clickable btn" onclick="Demo.bob2_copypriv()">copy from above</div></div>
+    <textarea class="bob secret" id="bob2-dh-priv" oninput="Demo.bob2_keychanged()"></textarea>
+    <button onclick="Demo.bob2()">Derive and test s-address</button>
+    <div class="label">Sender's address (long form, recovered from transaction signature):</div>
+    <textarea class="alice" id="bob2-tx-pub" disabled></textarea>
+    <div class="label dev">'S' (Diffie-Hellman shared secret: sender's pubkey * Bob's DH privkey):</div>
+    <textarea class="S dev" id="bob2-S" disabled></textarea>
+    <div class="label">
+Since the sender used the same key-pair to derive 'S' and sign
+the transaction, Bob can recover the public key he needs to reproduce 'S' from the normal transaction,
+<tt>S = DH(sender's recovered public key, Bob's master key)</tt>.
+Only the sender and Bob will know this public key serves a dual 
+purpose<a href="#foot7" class="clickable footlink">7</a>.
+    </div>
+    <div class="label">Derived S-wallet (address):</div>
+    <textarea class="S" id="bob2-S-pub" disabled></textarea>
+    <div class="label">Derived S-wallet (private key):</div>
+    <textarea class="S secret" id="bob2-S-priv" disabled></textarea>
+    <div class="result match hideifempty" id="bob2-result-match"></div>
+    <div class="result notmatch hideifempty" id="bob2-result-notmatch"></div>
+    <div class="label">
+Bob can take custody of derived S-wallet if address matches 'to' in 
+transaction<a href="#foot8" class="clickable footlink">8</a>.
+All Bob's actions performed locally/offline except transaction download.
+In production environments, Bob would test all recent transactions,
+which would be locally available when running a synced node, 
+otherwise the transactions would need to be downloaded from a third party service.
+    </div>
+  </div>
+
+  </div>
+
+
+  <div class="foot-body">
+
+    <div class="module plain foot">
+      <div class="tiny" id="foot1">
+1.  Perceived threats to national security and law enforcement interests were used in the past to justify attempts to restrict the use of encryption in personal communications.  Now that this use is commonplace, it is easy to see just how unwarranted those fears were.
+      </div>
+    </div>
+
+    <div class="module plain foot">
+      <div class="tiny" id="foot2">
+2.  What stealth protocols do for transacting on blockchain networks is comparable to what VPNs do for web browsing.
+      </div>
+    </div>
+
+    <div class="module plain foot">
+      <div class="tiny" id="foot3">
+3.  The first stealth protocol designs may have emerged from DarkWallet hackathons in 2014.
+For a description of a silent protocol from this period, see <i>Stealth Addresses for Maximum Public Privacy</i> at 
+<a href="https://gist.github.com/ryanxcharles/1c0f95d0892b4a92d70a" 
+   class="clickable long" target="_blank">https://gist.github.com/ryanxcharles/1c0f95d0892b4a92d70a</a>
+      </div>
+    </div>
+
+    <div class="module plain foot">
+      <div class="tiny" id="foot4">
+4.  It will still be evident Alice is sending coins somewhere, but the act of sending coins to some address isn't very revealing in itself.  Only Alice and Bob will know the destination address is encrypted.
+      </div>
+    </div>
+
+    <div class="module plain foot">
+      <div class="tiny" id="foot5">
+5.  <tt>secp256k1</tt> is the elliptic curve based cryptography that Bitcoin and Ethereum use to sign transactions.
+      </div>
+    </div>
+
+    <div class="module plain foot">
+      <div class="tiny" id="foot6">
+6.  In a bitcoin transaction, the public keys of the signers are stored in its 'inputs'.
+An ethereum transaction has only one signer and the public key is extracted from the signature.
+      </div>
+    </div>
+
+    <div class="module plain foot">
+      <div class="tiny" id="foot7">
+7.  Reusing key-pairs for different cryptographic primitives is known to be problematic in some situations,
+but there is research proving reuse secure in many contexts, see 
+<a class="clickable" target="_blank" href="https://ia.cr/2011/615">https://ia.cr/2011/615</a>,
+<a class="clickable" target="_blank" href="https://ia.cr/2021/509">https://ia.cr/2021/509</a>, and 
+<a class="clickable" target="_blank" href="https://ia.cr/2019/519">https://ia.cr/2019/519</a>.  
+The silent protocol demonstrated here reuses key-pairs for <tt>secp256k1</tt> based DH and signature.
+A proof showing under what conditions this is safe should form 
+the basis of any formal standard.
+      </div>
+    </div>
+
+    <div class="module plain foot">
+      <div class="tiny" id="foot8">
+8.  Using this simplified protocol, Alice would be able to take back
+the coins she sends to Bob, provided she does so before Bob spends or moves them.
+Many stealth protocols are designed to prevent this,
+but a crude "stop payment" capability might be considered more of a feature than a bug.
+      </div>
+    </div>
+
+    <div class="module plain foot">
+      <div class="tinyer"><i>
+All content public domain except <tt>noble_secp256k1.js</tt>
+<br/>
+Source code: 
+<a href="https://github.com/gregsidal/silentstealth" 
+   class="clickable" target="_blank">https://github.com/gregsidal/silentstealth</a>
+<br/>
+<a href="silentstealth2023v010.html" download="silentstealth2023v010.html" 
+   class="clickable" target="_blank">Self-contained downloadable</a>
+<br/>
+v0.10, last updated November 2023 by Greg Sidal
+      </i></div>
+    </div>
+
+  </div>
+
+</div>
+</body>
+</html>
